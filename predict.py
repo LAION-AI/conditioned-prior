@@ -12,19 +12,11 @@ from util import load_prior, slugify
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def save_results_to_json_file(text_input, results):
-    current_time_as_path_str = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    clean_prompt = slugify(text_input)
-    with open(f"results_{current_time_as_path_str}_{clean_prompt}.json", "w") as f:
-        json.dump(results, f)
-        print(f"Wrote results to {f.name}")
-        return f.name
-
 class Predictor(BasePredictor):
     @torch.inference_mode()
     def setup(self):
         """Load the model into memory to make running multiple predictions efficient"""
-        prior_model_path = "prior_L_fp16.pth"
+        prior_model_path = "prior_ema_fp16.pth"
         self.diffusion_prior = (
             load_prior(prior_model_path).to(DEVICE).eval().requires_grad_(False)
         )
