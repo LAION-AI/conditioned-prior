@@ -1,6 +1,9 @@
 # Conditioned Prior (WIP)
 
+<a href="https://replicate.com/laion-ai/conditioned-prior" target="_blank"><img src="https://img.shields.io/static/v1?label=Replicate&message=Demo and API&color=pink"></a>
+
 Weights and code by [@nousr](https://twitter.com/nousr_)
+
 
 Predict a CLIP image embedding from its text embedding using a diffusion prior.
 
