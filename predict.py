@@ -6,9 +6,16 @@ import typing
 
 import clip
 import torch
-from cog import BaseModel, BasePredictor, Path, Input
+from cog import BaseModel, BasePredictor, Path, Input, File
 
 from util import load_prior, slugify
+
+class Output(BaseModel):
+    prompt: str
+    num_candidates: int
+    cond_scale: float
+    image_embed: Path
+    text_embed: Path
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -21,6 +28,7 @@ class Predictor(BasePredictor):
             load_prior(prior_model_path).to(DEVICE).eval().requires_grad_(False)
         )
         print("loaded diffusion prior")
+        self.base_dir = Path(tempfile.mkdtemp())
 
     @torch.inference_mode()
     @torch.cuda.amp.autocast()
@@ -36,7 +44,7 @@ class Predictor(BasePredictor):
         cond_scale: float = Input(
             description="How much prior guidance to use.", default=1.0, ge=0.0, le=5.0
         ),
-    ) -> Path:
+    ) -> Output:
         """
         Load the model into memory to make running multiple predictions efficient
 
@@ -47,18 +55,26 @@ class Predictor(BasePredictor):
             target_batch_size: Numer of image embeds to generate from the text embed.
             num_results: The number of results to return from the clip-retrieval API.
         """
-        assert len(prompt) > 0, "Text input must be non-empty"
 
-        print(f"Tokenizing text: {prompt}")
+        assert len(prompt) > 0, "Text input must be non-empty"
+        print(f"Predicting CLIP ViT-L-14 image embed from prompt: {prompt}")
         text_tokens = clip.tokenize([prompt], truncate=True).to(DEVICE)
-        print(f"Encoding text: {prompt}")
-        image_embed = self.diffusion_prior.sample(
-            text=text_tokens,
-            num_samples_per_batch=candidates,
+
+        text_embed = self.diffusion_prior.clip.clip.encode_text(text_tokens) # TODO avoid this
+
+        image_embed = self.diffusion_prior.sample(text=text_tokens, num_samples_per_batch=candidates, cond_scale=cond_scale)
+
+        image_embed_json = image_embed.cpu().detach().numpy().astype("float32")[0].tolist()
+        text_embed_json = text_embed.cpu().detach().numpy().astype("float32")[0].tolist()
+
+        image_embed_path = self.base_dir.joinpath("image_embed.json")
+        text_embed_path = self.base_dir.joinpath("text_embed.json")
+        json.dump(image_embed_json, open(image_embed_path, "w"))
+        json.dump(text_embed_json, open(text_embed_path, "w"))
+        return Output(
+            prompt=prompt,
+            num_candidates=candidates,
             cond_scale=cond_scale,
+            image_embed=image_embed_path,
+            text_embed=text_embed_path,
         )
-        np_image_embed = image_embed.cpu().detach().numpy().astype("float32")[0] # reminder: dont use json, "bad for floats"
-        clean_prompt = slugify(prompt)[:50]
-        np_save_path = f"image_embed-{clean_prompt}-bs_{candidates}-gs_{cond_scale}.npy"
-        np.save(np_save_path, np_image_embed)
-        return Path(np_save_path)
