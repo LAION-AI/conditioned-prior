@@ -34,7 +34,7 @@ class Predictor(BasePredictor):
     @torch.cuda.amp.autocast()
     def predict(
         self,
-        prompt: str = Input(description="Text to visualize", default=""),
+        prompt: str = Input(description="Caption to invert to a CLIP image embed", default=""),
         candidates: int = Input(
             description="Numer of image embeds to draw from in the prior. Increasing may improve performance.",
             default=2,
