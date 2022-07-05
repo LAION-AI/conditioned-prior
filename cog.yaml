@@ -1,6 +1,6 @@
 # Configuration for Cog ⚙️
 # Reference: https://github.com/replicate/cog/blob/main/docs/yaml.md
-image: "r8.im/afiaka87/conditioned-prior"
+image: "r8.im/laion-ai/conditioned-prior"
 build:
   gpu: true
   python_version: "3.8"
