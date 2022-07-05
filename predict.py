@@ -60,17 +60,23 @@ class Predictor(BasePredictor):
         print(f"Predicting CLIP ViT-L-14 image embed from prompt: {prompt}")
         text_tokens = clip.tokenize([prompt], truncate=True).to(DEVICE)
 
-        text_embed = self.diffusion_prior.clip.clip.encode_text(text_tokens) # TODO avoid this
+        text_embed = self.diffusion_prior.clip.clip.encode_text(text_tokens)
+        text_embed /= text_embed.norm(dim=-1, keepdim=True)
+        text_embed = text_embed.cpu().detach().numpy().astype("float32")[0]
 
         image_embed = self.diffusion_prior.sample(text=text_tokens, num_samples_per_batch=candidates, cond_scale=cond_scale)
+        image_embed /= image_embed.norm(dim=-1, keepdim=True)
+        image_embed = image_embed.cpu().detach().numpy().astype("float32")[0]
 
-        image_embed_json = image_embed.cpu().detach().numpy().astype("float32")[0].tolist()
-        text_embed_json = text_embed.cpu().detach().numpy().astype("float32")[0].tolist()
+        image_embed_json = image_embed.tolist()
+        text_embed_json = text_embed.tolist()
 
         image_embed_path = self.base_dir.joinpath("image_embed.json")
         text_embed_path = self.base_dir.joinpath("text_embed.json")
+
         json.dump(image_embed_json, open(image_embed_path, "w"))
         json.dump(text_embed_json, open(text_embed_path, "w"))
+
         return Output(
             prompt=prompt,
             num_candidates=candidates,
