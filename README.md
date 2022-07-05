@@ -77,7 +77,7 @@ curl http://localhost:5000/predictions -X POST -H "Content-Type: application/jso
 
 ### Push a fork to your own Replicate account
 
-First, edit the `image` property in [/cog.yaml](cog.yaml)
+First, edit the `image` property in [cog.yaml](/cog.yaml)
 
 ```yaml
 # ...
