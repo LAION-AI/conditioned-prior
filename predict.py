@@ -34,14 +34,14 @@ class Predictor(BasePredictor):
     @torch.cuda.amp.autocast()
     def predict(
         self,
-        text_input: str = Input(description="Text to visualize", default=""),
-        prior_batch_size: int = Input(
+        prompt: str = Input(description="Text to visualize", default=""),
+        candidates: int = Input(
             description="Numer of image embeds to draw from in the prior. Increasing may improve performance.",
             default=2,
             ge=2,
             le=32,
         ),
-        prior_guidance_scale: float = Input(
+        cond_scale: float = Input(
             description="How much prior guidance to use.", default=1.0, ge=0.0, le=5.0
         ),
     ) -> Path:
@@ -55,18 +55,18 @@ class Predictor(BasePredictor):
             target_batch_size: Numer of image embeds to generate from the text embed.
             num_results: The number of results to return from the clip-retrieval API.
         """
-        assert len(text_input) > 0, "Text input must be non-empty"
+        assert len(prompt) > 0, "Text input must be non-empty"
 
-        print(f"Tokenizing text: {text_input}")
-        text_tokens = clip.tokenize([text_input], truncate=True).to(DEVICE)
-        print(f"Encoding text: {text_input}")
+        print(f"Tokenizing text: {prompt}")
+        text_tokens = clip.tokenize([prompt], truncate=True).to(DEVICE)
+        print(f"Encoding text: {prompt}")
         image_embed = self.diffusion_prior.sample(
             text=text_tokens,
-            num_samples_per_batch=prior_batch_size,
-            cond_scale=prior_guidance_scale,
+            num_samples_per_batch=candidates,
+            cond_scale=cond_scale,
         )
         np_image_embed = image_embed.cpu().detach().numpy().astype("float32")[0] # reminder: dont use json, "bad for floats"
-        clean_prompt = slugify(text_input)[:50]
-        np_save_path = f"image_embed-{clean_prompt}-bs_{prior_batch_size}-gs_{prior_guidance_scale}.npy"
+        clean_prompt = slugify(prompt)[:50]
+        np_save_path = f"image_embed-{clean_prompt}-bs_{candidates}-gs_{cond_scale}.npy"
         np.save(np_save_path, np_image_embed)
         return Path(np_save_path)
