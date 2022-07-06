@@ -21,29 +21,30 @@ This code is part of an effort to replicate the models laid out in [Hierarchical
 cog predict r8.im/laion-ai/conditioned-prior \
     -i prompt="..." \
     -i candidates=2 \
-    -i cond_scale=1.0
+    -i cond_scale=1.0 \
+    -i overwrite=False
 ```
 
 ### Parameters
 
-* `prompt` - Text to invert to a CLIP image embed
+* `prompt` - Text to invert to a CLIP image embed (Required)
 
-* `cond_scale` - How much prior guidance to use.
+* `cond_scale` - How much prior guidance to use. (Default 1.0)
 
-* `candidates` - Number of image embeds to draw from in the prior. Increasing may improve performance. 
+* `candidates` - Number of image embeds to draw from in the prior. Increasing may improve performance.  (Default: 2)
 
+* `overwrite` - Recomputes all embeds from scratch, even if they already exist on local storage. (Default: False)
 
 ### Output
 
 A `PriorOutput` - typed dictionary containing the text tokens, text embed and the image embed.
 
-* `PriorOutput.text_tokens` - ".npy" file containing ndarray of type `long`, representing the tokens of the text input. Included for convenience.
+* `text_embedding: List[float]` - CLIP embed of your text, included as convenience for cosine similarity.
 
-* `PriorOutput.text_embedding` - ".npy" file containing ndarray of type `float`, included for convenience.
+* `image_embedding: List[float]` - CLIP image embedding inverted from the text embedding using the conditoned-prior model.
 
-* `PriorOutput.image_embedding` ".npy" file containing ndarray of type `float`, representing the image embedding predicted by the model.
-
-Outputs are also stored in the current directory at `./.embed_cache/` using the prompt as the filename.
+Outputs are also stored as numpy arrays in the current directory at `f"./.embed_cache/text_embedding_{prompt}.npy"`
+and `f"./.embed_cache/image_embedding_{prompt}.npy"`
 
 ## Intended use
 
