@@ -1,19 +1,16 @@
-#%%
-import io
 import re
-import typing
 import unicodedata
-import urllib
 from functools import lru_cache
 
-import numpy as np
 import torch
 import torch.nn.functional as F
-from dalle2_pytorch import DiffusionPrior, DiffusionPriorNetwork, OpenAIClipAdapter
-from einops import rearrange, repeat
+from dalle2_pytorch import (DiffusionPrior, DiffusionPriorNetwork,
+                            OpenAIClipAdapter)
+
 
 def l2norm(t):
     return F.normalize(t, dim=-1)
+
 
 @lru_cache(maxsize=None)
 def slugify(value, allow_unicode=False):
@@ -29,6 +26,7 @@ def slugify(value, allow_unicode=False):
         )
     value = re.sub(r"[^\w\s-]", "", value.lower())
     return re.sub(r"[-\s]+", "-", value).strip("-_")
+
 
 def load_prior(model_path):
     """
@@ -63,4 +61,3 @@ def load_prior(model_path):
     diffusion_prior.load_state_dict(state_dict, strict=True)
     diffusion_prior.eval()
     return diffusion_prior
-
