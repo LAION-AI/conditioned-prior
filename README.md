@@ -55,6 +55,12 @@ git clone https://github.com/laion-ai/conditoned-prior.git && cd conditioned-pri
 
 ### Build the docker image from scratch
 
+Download the "slim" weights:
+
+```sh
+wget https://huggingface.co/laion/DALLE2-PyTorch/resolve/main/prior_ema_fp16.pth
+```
+
 Then, run:
 
 ```sh
@@ -91,4 +97,17 @@ build:
 # ...
 ```
 
+Make sure you are logged in:
+
+```sh
+cog login
+```
+
+and push your docker image to Replicate:
+
+```sh
+cog push
+```
+
+### Update the official laion-ai Replicate demo/api
 If you need to change the Replicate demo uploaded to `replicate.com/laion-ai/conditioned-prior`, you will need to be invited to be part of the laion-ai org on Replicate. Reach out to @afiaka87, @robvanvolt, @christophschuhmann, or @rom1504 if you need to.
