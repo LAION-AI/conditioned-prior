@@ -24,6 +24,25 @@ cog predict r8.im/laion-ai/conditioned-prior \
     -i cond_scale=1.0
 ```
 
+### Parameters
+
+* prompt: Text to invert to a CLIP image embed
+
+* cond_scale: How much prior guidance to use.
+
+* candidates: Number of image embeds to draw from in the prior. Increasing may improve performance. 
+
+
+### Output
+
+A `PriorOutput` - typed dictionary containing the text tokens, text embed and the image embed.
+
+* `PriorOutput.text_tokens` - ".npy" file containing ndarray of type `long`, representing the tokens of the text input. Included for convenience.
+
+* `PriorOutput.text_embedding` - ".npy" file containing ndarray of type `float`, included for convenience.
+
+* `PriorOutput.image_embedding` ".npy" file containing ndarray of type `float`, representing the image embedding predicted by the model.
+
 ## Intended use
 
 Anytime you need a CLIP image embed but only have a text description. For instance:
