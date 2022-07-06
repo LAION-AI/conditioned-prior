@@ -2,3 +2,5 @@
 __pycache__/
 prior_L_fp16.pth
 prior_ema_fp16.pth
+.embed_cache/
+.vscode/
