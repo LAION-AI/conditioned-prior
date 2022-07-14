@@ -4,8 +4,7 @@ from functools import lru_cache
 
 import torch
 import torch.nn.functional as F
-from dalle2_pytorch import (DiffusionPrior, DiffusionPriorNetwork,
-                            OpenAIClipAdapter)
+from dalle2_pytorch import DiffusionPrior, DiffusionPriorNetwork, OpenAIClipAdapter
 
 
 def l2norm(t):
@@ -28,11 +27,7 @@ def slugify(value, allow_unicode=False):
     return re.sub(r"[-\s]+", "-", value).strip("-_")
 
 
-def load_prior(model_path):
-    """
-    Loads the prior model and returns it. Doesn't move it to the gpu.
-    **Note** - this is a modified version of the original function to allow for the use of slim fp16 checkpoints.
-    """
+def load_prior(model_path, device="cpu", simulated_steps=1000):
     prior_network = DiffusionPriorNetwork(
         dim=768,
         depth=24,
@@ -44,10 +39,9 @@ def load_prior(model_path):
         num_time_embeds=1,
         num_image_embeds=1,
         num_text_embeds=1,
-        num_timesteps=1000,
+        num_timesteps=simulated_steps,  # TODO
         ff_mult=4,
     )
-
     diffusion_prior = DiffusionPrior(
         net=prior_network,
         clip=OpenAIClipAdapter("ViT-L/14"),
@@ -57,7 +51,15 @@ def load_prior(model_path):
         loss_type="l2",
         condition_on_text_encodings=True,
     )
-    state_dict = torch.load(model_path, map_location="cpu")
-    diffusion_prior.load_state_dict(state_dict, strict=True)
-    diffusion_prior.eval()
+    diffusion_prior.to(device)
+    model_state_dict = torch.load(model_path)
+    if "ema_model" in model_state_dict:
+        print("Loading EMA Model")
+        diffusion_prior.load_state_dict(model_state_dict["ema_model"], strict=True)
+    elif "ema_prior_aes_finetune.pth" in model_path:
+        diffusion_prior.load_state_dict(model_state_dict, strict=False)
+    else:
+        print("Loading Standard Model")
+        diffusion_prior.load_state_dict(model_state_dict["model"], strict=False)
+    del model_state_dict
     return diffusion_prior
